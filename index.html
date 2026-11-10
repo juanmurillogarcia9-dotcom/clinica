@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aula Clínica - Enfermería Pediátrica y Neonatal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            teal: { 50: '#f0fdfa', 100: '#ccfbf1', 500: '#14b8a6', 600: '#0d9488', 700: '#0f766e', 800: '#115e59', 900: '#134e4a' },
+            cyan: { 50: '#ecfeff', 100: '#cffafe', 600: '#0891b2', 700: '#0e7490' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .pulse-danger {
+      animation: pulseAlert 2s infinite;
+    }
+
+    @keyframes pulseAlert {
+
+      0%,
+      100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+      }
+
+      50% {
+        transform: scale(1.02);
+        box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+      }
+    }
+  </style>
+</head>
+
+<body
+  class="bg-slate-50 dark:bg-slate-950 font-sans text-slate-800 dark:text-slate-100 flex flex-col min-h-screen selection:bg-teal-100 selection:text-teal-900 transition-colors duration-200">
+
+  <!-- Toast Notification System -->
+  <div id="toast"
+    class="fixed bottom-6 right-6 z-50 bg-slate-900 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center space-x-3 transition-all duration-300 transform translate-y-20 opacity-0 pointer-events-none">
+    <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>
+    <span id="toast-msg" class="text-sm font-medium">Acción completada</span>
+  </div>
+
+  <!-- ==================== MODAL CÓDIGO AZUL (EMERGENCIA PALS) ==================== -->
+  <div id="emergency-modal"
+    class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div
+      class="bg-white dark:bg-slate-900 rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl border-4 border-red-600 relative">
+      <button onclick="closeEmergencyModal()"
+        class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-white text-xl"><i
+          class="fa-solid fa-xmark"></i></button>
+      <div class="flex items-center space-x-3 mb-4">
+        <div
+          class="w-12 h-12 rounded-2xl bg-red-600 text-white flex items-center justify-center text-2xl animate-pulse"><i
+            class="fa-solid fa-truck-medical"></i></div>
+        <div>
+          <h2 class="text-2xl font-black text-red-600">¡CÓDIGO AZUL PEDIÁTRICO (PALS)!</h2>
+          <p class="text-xs text-slate-500">Protocolo de Reanimación Cardiopulmonar Avanzada en Pediatría</p>
+        </div>
+      </div>
+      <div class="space-y-4 max-h-[60vh] overflow-y-auto pr-2 text-xs sm:text-sm">
+        <div class="bg-red-50 dark:bg-red-950/40 p-4 rounded-xl border border-red-200 dark:border-red-900">
+          <h4 class="font-bold text-red-700 dark:text-red-400 mb-1">1. Evaluación y Soporte Inicial</h4>
+          <p class="text-slate-600 dark:text-slate-300">Verificar seguridad, comprobar consciencia y pulso por máximo 10
+            segundos. Si no hay pulso o F.C. < 60 lpm con mala perfusión, iniciar RCP inmediatamente (15:2).</p>
+        </div>
+        <div class="bg-teal-50 dark:bg-teal-950/40 p-4 rounded-xl border border-teal-200 dark:border-teal-900">
+          <h4 class="font-bold text-teal-700 dark:text-teal-300 mb-1">2. Fármacos Críticos (Vía IV / IO)</h4>
+          <ul class="list-disc list-inside space-y-1 text-slate-600 dark:text-slate-300">
+            <li><strong>Adrenalina:</strong> 0.01 mg/kg (0.1 mL/kg de solución 1:10.000) cada 3-5 minutos.</li>
+            <li><strong>Desfibrilación:</strong> 2 J/kg el primer choque, 4 J/kg los siguientes.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="mt-6 flex justify-end">
+        <button onclick="closeEmergencyModal()"
+          class="bg-red-600 hover:bg-red-700 text-white font-bold px-6 py-2.5 rounded-xl text-xs transition-all">Cerrar
+          Protocolo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== VIEW 1: LOGIN / REGISTRO ==================== -->
+  <div id="view-auth"
+    class="min-h-screen bg-gradient-to-br from-teal-950 via-teal-900 to-slate-950 flex flex-col items-center justify-center p-4 relative overflow-hidden select-none">
+    <div
+      class="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full overflow-hidden shadow-2xl border border-teal-500/30 dark:border-slate-800 relative z-10">
+      <div class="bg-gradient-to-r from-teal-800 via-teal-700 to-teal-800 p-6 text-white text-center relative">
+        <div
+          class="w-20 h-20 mx-auto rounded-full bg-white/10 backdrop-blur-md p-1.5 mb-2 shadow-inner border border-white/30 flex items-center justify-center text-3xl">
+          <i class="fa-solid fa-stethoscope"></i></div>
+        <span
+          class="bg-teal-600/70 border border-teal-400/40 text-teal-100 text-[10px] font-extrabold px-3 py-0.5 rounded-full uppercase tracking-wider">Aula
+          Clínica</span>
+        <h2 class="text-2xl font-black mt-1">Acceso Profesional</h2>
+        <p class="text-teal-200 text-xs mt-0.5">San Gil & Santander, Colombia</p>
+      </div>
+
+      <div class="flex border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
+        <button onclick="switchAuthTab('login')" id="auth-tab-btn-login"
+          class="flex-1 py-3 text-xs font-bold text-teal-700 border-b-2 border-teal-700 dark:text-teal-400">Iniciar
+          Sesión</button>
+        <button onclick="switchAuthTab('register')" id="auth-tab-btn-register"
+          class="flex-1 py-3 text-xs font-semibold text-slate-400 border-b-2 border-transparent hover:text-slate-700">Registro
+          Nuevo</button>
+      </div>
+
+      <div class="p-6">
+        <form id="form-login" onsubmit="handleLoginSubmit(event)" class="space-y-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Correo Electrónico:</label>
+            <input type="email" id="login-email" required placeholder="nombre@hospital.com"
+              class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-xs focus:ring-2 focus:ring-teal-500 dark:text-white">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Contraseña:</label>
+            <input type="password" id="login-password" required placeholder="••••••••"
+              class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-xs focus:ring-2 focus:ring-teal-500 dark:text-white">
+          </div>
+          <button type="submit"
+            class="w-full bg-teal-700 hover:bg-teal-800 text-white font-bold py-3 rounded-xl text-xs shadow-md transition-all">Ingresar
+            al Aula</button>
+          <div class="relative flex py-2 items-center">
+            <div class="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
+            <span class="flex-shrink mx-3 text-slate-400 text-[10px] uppercase font-bold">O también</span>
+            <div class="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
+          </div>
+          <button type="button" onclick="loginAsGuest()"
+            class="w-full bg-slate-100 hover:bg-teal-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold py-3 rounded-xl text-xs transition-colors border border-slate-200 dark:border-slate-700">Acceso
+            Rápido como Invitado (Demo)</button>
+        </form>
+
+        <form id="form-register" onsubmit="handleRegisterSubmit(event)" class="space-y-3.5 hidden">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Nombre Completo:</label>
+            <input type="text" id="reg-name" required placeholder="Lic. Mariana Torres"
+              class="w-full border border-slate-300 dark:border-slate-700 dark:bg-slate-800 rounded-xl p-2.5 text-xs dark:text-white">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Rol / Especialidad:</label>
+            <select id="reg-role"
+              class="w-full border border-slate-300 dark:border-slate-700 dark:bg-slate-800 rounded-xl p-2.5 text-xs dark:text-white">
+              <option value="Estudiante de Enfermería">Estudiante de Enfermería</option>
+              <option value="Enfermera(o) Pediátrica">Enfermera(o) Pediátrica</option>
+              <option value="Pediatra / Docente">Pediatra / Docente</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Sede / Ciudad:</label>
+            <input type="text" id="reg-hospital" required placeholder="Hospital San Gil"
+              class="w-full border border-slate-300 dark:border-slate-700 dark:bg-slate-800 rounded-xl p-2.5 text-xs dark:text-white">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Correo Electrónico:</label>
+            <input type="email" id="reg-email" required placeholder="correo@hospital.com"
+              class="w-full border border-slate-300 dark:border-slate-700 dark:bg-slate-800 rounded-xl p-2.5 text-xs dark:text-white">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Contraseña:</label>
+            <input type="password" id="reg-password" required placeholder="••••••••"
+              class="w-full border border-slate-300 dark:border-slate-700 dark:bg-slate-800 rounded-xl p-2.5 text-xs dark:text-white">
+          </div>
+          <button type="submit"
+            class="w-full bg-teal-700 hover:bg-teal-800 text-white font-bold py-3 rounded-xl text-xs shadow-md">Crear
+            Cuenta e Ingresar</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== VIEW 2: MAIN CLINICAL APPLICATION ==================== -->
+  <div id="view-main" class="hidden min-h-screen flex flex-col">
+    <header
+      class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40 shadow-sm transition-colors">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-20 items-center">
+
+          <div class="flex items-center space-x-3 cursor-pointer select-none" onclick="navigateTo('home')">
+            <div
+              class="w-12 h-12 rounded-2xl bg-teal-700 flex items-center justify-center text-white shadow-md shadow-teal-700/20 text-xl font-bold">
+              <i class="fa-solid fa-child-reaching"></i></div>
+            <div>
+              <div class="flex items-center space-x-1.5">
+                <span class="text-xl font-bold tracking-tight text-slate-900 dark:text-white block leading-tight">Aula
+                  Clínica</span>
+                <span
+                  class="bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-300 text-[10px] font-extrabold px-1.5 py-0.5 rounded uppercase">PRO</span>
+              </div>
+              <span class="text-xs font-semibold uppercase tracking-wider text-teal-700 dark:text-teal-400">Enfermería
+                Pediátrica</span>
+            </div>
+          </div>
+
+          <!-- Desktop Navigation -->
+          <nav class="hidden xl:flex space-x-1 items-center">
+            <button onclick="navigateTo('home')" id="nav-home"
+              class="nav-btn px-3 py-2 rounded-lg text-xs font-semibold transition-all text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/60"><i
+                class="fa-solid fa-house mr-1"></i> Inicio</button>
+            <button onclick="navigateTo('pediatria')" id="nav-pediatria"
+              class="nav-btn px-3 py-2 rounded-lg text-xs font-medium transition-all text-slate-600 dark:text-slate-300 hover:text-teal-700 hover:bg-teal-50"><i
+                class="fa-solid fa-child mr-1"></i> Pediatría</button>
+            <button onclick="navigateTo('neonatos')" id="nav-neonatos"
+              class="nav-btn px-3 py-2 rounded-lg text-xs font-medium transition-all text-slate-600 dark:text-slate-300 hover:text-teal-700 hover:bg-teal-50"><i
+                class="fa-solid fa-baby mr-1"></i> Neonatos</button>
+            <button onclick="navigateTo('pp')" id="nav-pp"
+              class="nav-btn px-3 py-2 rounded-lg text-xs font-medium transition-all text-slate-600 dark:text-slate-300 hover:text-teal-700 hover:bg-teal-50"><i
+                class="fa-solid fa-shield-heart mr-1"></i> P&P (PAI)</button>
+            <button onclick="navigateTo('medicamentos')" id="nav-medicamentos"
+              class="nav-btn px-3 py-2 rounded-lg text-xs font-medium transition-all text-slate-600 dark:text-slate-300 hover:text-teal-700 hover:bg-teal-50"><i
+                class="fa-solid fa-pills mr-1"></i> Medicamentos</button>
+            <button onclick="navigateTo('calculadoras')" id="nav-calculadoras"
+              class="nav-btn px-3 py-2 rounded-lg text-xs font-medium transition-all text-slate-600 dark:text-slate-300 hover:text-teal-700 hover:bg-teal-50"><i
+                class="fa-solid fa-calculator mr-1"></i> Calculadoras</button>
+            <button onclick="navigateTo('simulacion')" id="nav-simulacion"
+              class="nav-btn px-3 py-2 rounded-lg text-xs font-medium transition-all text-slate-600 dark:text-slate-300 hover:text-teal-700 hover:bg-teal-50"><i
+                class="fa-solid fa-graduation-cap mr-1"></i> Simulación & Casos</button>
+            <button onclick="navigateTo('turno')" id="nav-turno"
+              class="nav-btn px-3 py-2 rounded-lg text-xs font-medium transition-all text-slate-600 dark:text-slate-300 hover:text-teal-700 hover:bg-teal-50"><i
+                class="fa-solid fa-clipboard-user mr-1"></i> Mi Turno</button>
+          </nav>
+
+          <!-- Actions -->
+          <div class="flex items-center space-x-2 sm:space-x-3">
+            <button onclick="openEmergencyModal()"
+              class="pulse-danger bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg text-xs font-extrabold flex items-center shadow-md transition-all">
+              <i class="fa-solid fa-truck-medical mr-1.5"></i><span class="hidden sm:inline">Código Azul</span>
+            </button>
+            <button onclick="toggleDarkMode()"
+              class="p-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+              <i id="dark-mode-icon" class="fa-solid fa-moon text-sm"></i>
+            </button>
+            <div id="user-header-area"></div>
+            <button onclick="toggleMobileMenu()"
+              class="xl:hidden text-slate-600 dark:text-slate-300 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"><i
+                class="fa-solid fa-bars text-lg"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mobile Navigation Drawer -->
+      <div id="mobile-menu"
+        class="hidden xl:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 pt-2 pb-4 space-y-1">
+        <button onclick="navigateTo('home'); toggleMobileMenu();"
+          class="w-full text-left px-3 py-2 rounded-md text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-teal-50 flex items-center"><i
+            class="fa-solid fa-house w-6 text-teal-600"></i> Inicio</button>
+        <button onclick="navigateTo('pediatria'); toggleMobileMenu();"
+          class="w-full text-left px-3 py-2 rounded-md text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-teal-50 flex items-center"><i
+            class="fa-solid fa-child w-6 text-teal-600"></i> Pediatría</button>
+        <button onclick="navigateTo('neonatos'); toggleMobileMenu();"
+          class="w-full text-left px-3 py-2 rounded-md text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-teal-50 flex items-center"><i
+            class="fa-solid fa-baby w-6 text-cyan-600"></i> Neonatos</button>
+        <button onclick="navigateTo('pp'); toggleMobileMenu();"
+          class="w-full text-left px-3 py-2 rounded-md text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-teal-50 flex items-center"><i
+            class="fa-solid fa-shield-heart w-6 text-emerald-600"></i> P&P (PAI)</button>
+        <button onclick="navigateTo('medicamentos'); toggleMobileMenu();"
+          class="w-full text-left px-3 py-2 rounded-md text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-teal-50 flex items-center"><i
+            class="fa-solid fa-pills w-6 text-indigo-600"></i> Medicamentos</button>
+        <button onclick="navigateTo('calculadoras'); toggleMobileMenu();"
+          class="w-full text-left px-3 py-2 rounded-md text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-teal-50 flex items-center"><i
+            class="fa-solid fa-calculator w-6 text-amber-600"></i> Calculadoras</button>
+        <button onclick="navigateTo('simulacion'); toggleMobileMenu();"
+          class="w-full text-left px-3 py-2 rounded-md text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-teal-50 flex items-center"><i
+            class="fa-solid fa-graduation-cap w-6 text-purple-600"></i> Simulación & Casos</button>
+        <button onclick="navigateTo('turno'); toggleMobileMenu();"
+          class="w-full text-left px-3 py-2 rounded-md text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-teal-50 flex items-center"><i
+            class="fa-solid fa-clipboard-user w-6 text-teal-600"></i> Mi Turno</button>
+      </div>
+    </header>
+
+    <!-- Hero / Welcome Section (DISEÑO MEJORADO) -->
+    <section
+      class="bg-gradient-to-r from-teal-900 via-teal-800 to-teal-700 text-white py-12 lg:py-16 shadow-inner relative overflow-hidden">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 space-y-3">
+        <div
+          class="inline-flex items-center space-x-2 bg-teal-600/60 backdrop-blur-sm border border-teal-400/30 text-teal-100 text-xs px-3.5 py-1 rounded-full uppercase tracking-wider font-semibold">
+          <i class="fa-solid fa-award text-amber-300"></i><span>Plataforma Clínica Acreditada • Guías AIEPI &
+            PALS</span>
+        </div>
+        <h1 id="hero-title" class="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-tight">
+          ¡Bienvenido(a) al Aula Clínica!
+        </h1>
+        <p id="hero-subtitle" class="text-teal-100 text-sm sm:text-base leading-relaxed max-w-2xl font-medium">
+          Espacio formativo avanzado en San Gil y Santander. Tienes acceso completo a todas las guías, vademécum,
+          calculadoras PALS y censo hospitalario.
+        </p>
+      </div>
+    </section>
+
+    <!-- ==================== DYNAMIC CONTENT VIEWS (MÁS CONTENIDO Y CATÁLOGO) ==================== -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-6">
+
+      <!-- 1. VIEW: HOME -->
+      <div id="content-home" class="space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div onclick="navigateTo('medicamentos')"
+            class="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 cursor-pointer hover:border-teal-500 hover:shadow-md transition-all group">
+            <div
+              class="w-12 h-12 rounded-2xl bg-teal-100 dark:bg-teal-950 text-teal-700 dark:text-teal-300 flex items-center justify-center font-bold mb-4 text-lg group-hover:scale-110 transition-transform">
+              <i class="fa-solid fa-pills"></i></div>
+            <h3 class="font-bold text-lg mb-1">Vademécum Frecuente</h3>
+            <p class="text-xs text-slate-500">Consulta rápida de dosis, concentraciones y alertas de los fármacos
+              pediátricos más utilizados.</p>
+          </div>
+          <div onclick="navigateTo('calculadoras')"
+            class="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 cursor-pointer hover:border-teal-500 hover:shadow-md transition-all group">
+            <div
+              class="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 flex items-center justify-center font-bold mb-4 text-lg group-hover:scale-110 transition-transform">
+              <i class="fa-solid fa-calculator"></i></div>
+            <h3 class="font-bold text-lg mb-1">Calculadoras Clínicas</h3>
+            <p class="text-xs text-slate-500">Herramientas activas para goteo, superficie corporal y cálculo de dosis
+              ponderales.</p>
+          </div>
+          <div onclick="navigateTo('turno')"
+            class="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 cursor-pointer hover:border-teal-500 hover:shadow-md transition-all group">
+            <div
+              class="w-12 h-12 rounded-2xl bg-cyan-100 dark:bg-cyan-950 text-cyan-700 dark:text-cyan-300 flex items-center justify-center font-bold mb-4 text-lg group-hover:scale-110 transition-transform">
+              <i class="fa-solid fa-clipboard-user"></i></div>
+            <h3 class="font-bold text-lg mb-1">Gestión de Turno</h3>
+            <p class="text-xs text-slate-500">Programación de turnos y checklist interactivo para tus guardias
+              hospitalarias.</p>
+          </div>
+        </div>
+
+        <div
+          class="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 space-y-6">
+          <h2 class="text-xl font-extrabold text-teal-800 dark:text-teal-300 flex items-center">
+            <i class="fa-solid fa-hospital-user mr-2.5 text-teal-600"></i> Estadísticas y Censo Hospitalario Actual
+          </h2>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="p-4 rounded-2xl bg-teal-50 dark:bg-slate-800 border border-teal-100 dark:border-slate-700">
+              <span class="text-xs font-bold text-teal-700 dark:text-teal-400 block mb-1">Pacientes en Urgencias</span>
+              <span class="text-2xl font-black text-slate-900 dark:text-white">14 Niños</span>
+            </div>
+            <div class="p-4 rounded-2xl bg-cyan-50 dark:bg-slate-800 border border-cyan-100 dark:border-slate-700">
+              <span class="text-xs font-bold text-cyan-700 dark:text-cyan-400 block mb-1">Unidad Neonatal (UCIN)</span>
+              <span class="text-2xl font-black text-slate-900 dark:text-white">8 Neonas</span>
+            </div>
+            <div
+              class="p-4 rounded-2xl bg-emerald-50 dark:bg-slate-800 border border-emerald-100 dark:border-slate-700">
+              <span class="text-xs font-bold text-emerald-700 dark:text-emerald-400 block mb-1">Guías AIEPI
+                Validadas</span>
+              <span class="text-2xl font-black text-slate-900 dark:text-white">24 Guías</span>
+            </div>
+            <div class="p-4 rounded-2xl bg-purple-50 dark:bg-slate-800 border border-purple-100 dark:border-slate-700">
+              <span class="text-xs font-bold text-purple-700 dark:text-purple-400 block mb-1">Turnos Activos</span>
+              <span class="text-2xl font-black text-slate-900 dark:text-white">3 Equipos</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. VIEW: PEDIATRÍA (CONTENIDO EXTENDIDO) -->
+      <div id="content-pediatria" class="hidden space-y-6">
+        <div
+          class="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 space-y-6">
+          <div class="flex items-center space-x-3 border-b border-slate-100 dark:border-slate-800 pb-4">
+            <div
+              class="w-12 h-12 rounded-2xl bg-teal-100 dark:bg-teal-950 text-teal-700 dark:text-teal-300 flex items-center justify-center text-xl font-bold">
+              <i class="fa-solid fa-child"></i></div>
+            <div>
+              <h2 class="text-xl font-black text-teal-800 dark:text-teal-300">Módulo de Pediatría & Guías Clínicas AIEPI
+              </h2>
+              <p class="text-xs text-slate-500">Protocolos de atención integral para pacientes pediátricos basados en
+                normatividad vigente.</p>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div
+              class="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-3">
+              <h3 class="font-bold text-sm text-teal-700 dark:text-teal-400 flex items-center"><i
+                  class="fa-solid fa-lungs mr-2"></i> Manejo de Infecciones Respiratorias (IRA)</h3>
+              <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">Evaluación de la frecuencia
+                respiratoria según la edad: Neonato (>60 rpm), 2-11 meses (>50 rpm), 1-5 años (>40 rpm). Identificación
+                temprana de tirajes subcostales.</p>
+              <div
+                class="text-[11px] bg-teal-100 dark:bg-teal-950 p-2.5 rounded-xl text-teal-900 dark:text-teal-200 font-medium">
+                ✔️ Criterio de remisión UCI: Saturación < 90% con O2 suplementario.</div>
+              </div>
+              <div
+                class="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-3">
+                <h3 class="font-bold text-sm text-teal-700 dark:text-teal-400 flex items-center"><i
+                    class="fa-solid fa-droplet mr-2"></i> Enfermedad Diarreica Aguda (EDA)</h3>
+                <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">Clasificación en Planes A, B y C
+                  de hidratación oral. Administración de Sales de Rehidratación Oral (SRO) 10 ml/kg por cada deposición.
+                </p>
+                <div
+                  class="text-[11px] bg-teal-100 dark:bg-teal-950 p-2.5 rounded-xl text-teal-900 dark:text-teal-200 font-medium">
+                  ✔️ Zinc diario: 10-20 mg/día por 10-14 días.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. VIEW: NEONATOS (CONTENIDO EXTENDIDO Y INTERACTIVO) -->
+        <div id="content-neonatos" class="hidden space-y-6">
+          <div
+            class="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 space-y-6">
+            <div class="flex items-center space-x-3 border-b border-slate-100 dark:border-slate-800 pb-4">
+              <div
+                class="w-12 h-12 rounded-2xl bg-cyan-100 dark:bg-cyan-950 text-cyan-700 dark:text-cyan-300 flex items-center justify-center text-xl font-bold">
+                <i class="fa-solid fa-baby"></i></div>
+              <div>
+                <h2 class="text-xl font-black text-cyan-700 dark:text-cyan-300">Neonatología & Cuidados del Recién
+                  Nacido</h2>
+                <p class="text-xs text-slate-500">Evaluación Apgar, manejo de prematurez, termorregulación y soporte
+                  vital neonatal.</p>
+              </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div
+                class="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-3">
+                <h3 class="font-bold text-sm text-cyan-700 dark:text-cyan-400 flex items-center"><i
+                    class="fa-solid fa-clipboard-check mr-2"></i> Test de Apgar al Nacimiento</h3>
+                <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">Se evalúa al minuto 1 y al minuto
+                  5 de vida. Califica 5 parámetros de 0 a 2: Apariencia, Pulso, Reflejos, Actividad y Respiración.</p>
+                <div
+                  class="text-[11px] bg-cyan-100 dark:bg-cyan-950 p-2.5 rounded-xl text-cyan-900 dark:text-cyan-200 font-medium">
+                  ✔️ Puntaje 7-10: Normal | 4-6: Depresión moderada | 0-3: Severa.</div>
+              </div>
+              <div
+                class="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-3">
+                <h3 class="font-bold text-sm text-cyan-700 dark:text-cyan-400 flex items-center"><i
+                    class="fa-solid fa-temperature-high mr-2"></i> Termorregulación y Cadena de Frío</h3>
+                <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">Mantener sala de parto entre 26°C
+                  y 28°C. Secado inmediato con compresas tibias y contacto piel a piel o incubadora.</p>
+                <div
+                  class="text-[11px] bg-cyan-100 dark:bg-cyan-950 p-2.5 rounded-xl text-cyan-900 dark:text-cyan-200 font-medium">
+                  ✔️ Temperatura axilar ideal: 36.5°C - 37.5°C.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. VIEW: P&P (PAI) -->
+        <div id="content-pp" class="hidden space-y-6">
+          <div
+            class="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 space-y-4">
+            <h2 class="text-xl font-black text-emerald-700 dark:text-emerald-300">Prevención & Promoción (Esquema PAI)
+            </h2>
+            <p class="text-xs text-slate-500">Esquema oficial de vacunación y control de crecimiento.</p>
+            <div class="p-4 bg-emerald-50 dark:bg-slate-800 rounded-2xl text-xs space-y-2">
+              <p><strong>Recién Nacido:</strong> BCG y Polio oral / Hepatitis B.</p>
+              <p><strong>2 Meses:</strong> Pentavalente (1ª dosis), Polio (1ª), Rotavirus (1ª), Neumococo (1ª).</p>
+              <p><strong>4 Meses:</strong> Pentavalente (2ª dosis), Polio (2ª), Rotavirus (2ª), Neumococo (2ª).</p>
+              <p><strong>6 Meses:</strong> Pentavalente (3ª dosis), Polio (3ª), Influenza (1ª dosis).</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. VIEW: MEDICAMENTOS -->
+        <div id="content-medicamentos" class="hidden space-y-6">
+          <div
+            class="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800">
+            <h2 class="text-xl font-black text-teal-800 dark:text-teal-300 mb-2">Vademécum Pediátrico - Fármacos Más
+              Utilizados</h2>
+            <p class="text-xs text-slate-500 mb-6">Selecciona cualquier medicamento para consultar dosis,
+              concentraciones y alertas de seguridad.</p>
+            <div id="medicamentos-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+          </div>
+        </div>
+
+        <!-- 6. VIEW: CALCULADORAS CLÍNICAS MEJORADAS -->
+        <div id="content-calculadoras" class="hidden space-y-6">
+          <div
+            class="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 space-y-6">
+            <div>
+              <h2 class="text-xl font-black text-amber-700 dark:text-amber-300"><i
+                  class="fa-solid fa-calculator mr-2"></i> Calculadora de Dosis Ponderal Avanzada</h2>
+              <p class="text-xs text-slate-500 mt-1">Selecciona el fármaco, ingresa el peso del paciente y calcula de
+                forma automática los miligramos (mg) y mililitros (mL) a administrar.</p>
+            </div>
+
+            <div
+              class="bg-slate-50 dark:bg-slate-800 p-6 rounded-3xl border border-slate-200 dark:border-slate-700 space-y-4 max-w-xl">
+              <div>
+                <label class="block text-xs font-bold mb-1">Seleccionar Fármaco:</label>
+                <select id="calc-select-med" onchange="actualizarDosisSugerida()"
+                  class="w-full p-3 border rounded-xl text-xs dark:bg-slate-900 dark:border-slate-700 dark:text-white font-medium">
+                  <option value="10">Acetaminofén (10 - 15 mg/kg)</option>
+                  <option value="10-ib">Ibuprofeno (10 mg/kg)</option>
+                  <option value="80">Amoxicilina (80 - 90 mg/kg/día)</option>
+                </select>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-bold mb-1">Peso del Paciente (kg):</label>
+                  <input type="number" id="calc-peso" placeholder="Ej. 12"
+                    class="w-full p-3 border rounded-xl text-xs dark:bg-slate-900 dark:border-slate-700 dark:text-white">
+                </div>
+                <div>
+                  <label class="block text-xs font-bold mb-1">Dosis (mg/kg):</label>
+                  <input type="number" id="calc-dosis" value="10" placeholder="Ej. 10"
+                    class="w-full p-3 border rounded-xl text-xs dark:bg-slate-900 dark:border-slate-700 dark:text-white">
+                </div>
+              </div>
+              <button onclick="calcularDosisAvanzada()"
+                class="bg-amber-600 hover:bg-amber-700 text-white font-bold p-3 rounded-xl text-xs w-full transition-all shadow-md"><i
+                  class="fa-solid fa-bolt mr-2"></i> Calcular Dosis Exacta</button>
+              <div id="calc-resultado"
+                class="hidden p-4 rounded-2xl bg-amber-50 dark:bg-slate-900 border border-amber-200 dark:border-amber-800 text-xs text-amber-900 dark:text-amber-200 font-bold space-y-1">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 7. VIEW: SIMULACIÓN -->
+        <div id="content-simulacion" class="hidden space-y-6">
+          <div
+            class="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 space-y-4">
+            <h2 class="text-xl font-black text-purple-700 dark:text-purple-300">Simulación & Casos Clínicos</h2>
+            <p class="text-xs text-slate-500">Escenarios prácticos interactivos orientados a la toma de decisiones.</p>
+          </div>
+        </div>
+
+        <!-- 8. VIEW: MI TURNO (GESTIÓN DE HORARIOS) -->
+        <div id="content-turno" class="hidden space-y-6">
+          <div
+            class="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 space-y-6">
+            <div class="border-b border-slate-100 dark:border-slate-800 pb-4">
+              <h2 class="text-xl font-black text-teal-800 dark:text-teal-300"><i
+                  class="fa-solid fa-clipboard-user mr-2"></i> Mi Turno - Programación y Pendientes</h2>
+              <p class="text-xs text-slate-500">Organiza tus horarios de guardia y tareas clínicas del turno
+                hospitalario.</p>
+            </div>
+
+            <div
+              class="bg-teal-50 dark:bg-slate-800 p-4 rounded-2xl border border-teal-100 dark:border-slate-700 grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+              <div>
+                <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">Día:</label>
+                <select id="turno-dia"
+                  class="w-full p-2.5 border rounded-xl text-xs dark:bg-slate-900 dark:border-slate-700 dark:text-white">
+                  <option value="Martes">Martes</option>
+                  <option value="Miércoles">Miércoles</option>
+                  <option value="Jueves">Jueves</option>
+                  <option value="Viernes">Viernes</option>
+                  <option value="Sábado">Sábado</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">Entrada:</label>
+                <input type="text" id="turno-entrada" placeholder="6:00 PM"
+                  class="w-full p-2.5 border rounded-xl text-xs dark:bg-slate-900 dark:border-slate-700 dark:text-white">
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">Salida:</label>
+                <input type="text" id="turno-salida" placeholder="12:00 AM"
+                  class="w-full p-2.5 border rounded-xl text-xs dark:bg-slate-900 dark:border-slate-700 dark:text-white">
+              </div>
+              <div>
+                <button onclick="agregarTurnoHorario()"
+                  class="w-full bg-teal-700 hover:bg-teal-800 text-white font-bold p-2.5 rounded-xl text-xs transition-all"><i
+                    class="fa-solid fa-plus mr-1"></i> Agregar</button>
+              </div>
+            </div>
+
+            <div>
+              <h3 class="font-bold text-sm mb-3 text-slate-800 dark:text-slate-200">Mis Turnos Programados esta Semana
+              </h3>
+              <div id="lista-turnos-horarios" class="grid grid-cols-1 sm:grid-cols-3 gap-3"></div>
+            </div>
+
+            <div class="border-t border-slate-100 dark:border-slate-800 pt-6">
+              <h3 class="font-bold text-sm mb-3 text-slate-800 dark:text-slate-200">Lista de Tareas Críticas del Turno
+              </h3>
+              <div id="turno-checklist" class="space-y-2"></div>
+            </div>
+          </div>
+        </div>
+
+    </main>
+
+    <footer
+      class="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-6 mt-auto text-center text-xs text-slate-500">
+      <p>© Aula Clínica de Enfermería Pediátrica & Neonatal • San Gil, Santander</p>
+    </footer>
+  </div>
+
+  <!-- ==================== SCRIPT DE LÓGICA Y VALIDACIONES ==================== -->
+  <script>
+    const appState = {
+      user: null,
+      currentView: 'home',
+      darkMode: false,
+      medicamentos: [
+        { id: 1, nombre: 'Acetaminofén (Paracetamol)', categoria: 'Analgésico / Antitérmico', dosis: '10 - 15 mg/kg/dosis V.O. c/6h', concentracion: '150 mg/5 mL (Jarabe)', alerta: 'No exceder de 5 dosis en 24 horas.' },
+        { id: 2, nombre: 'Ibuprofeno', categoria: 'AINE / Antitérmico', dosis: '10 mg/kg/dosis V.O. c/8h', concentracion: '100 mg/5 mL (Suspensión)', alerta: 'Contraindicado en menores de 6 meses y sospecha de dengue.' },
+        { id: 3, nombre: 'Amoxicilina', categoria: 'Antibiótico', dosis: '80 - 90 mg/kg/día V.O. dividido c/12h', concentracion: '250 mg/5 mL o 500 mg/5 mL', alerta: 'Verificar alergia previa a penicilinas.' },
+        { id: 4, nombre: 'Salbutamol', categoria: 'Broncodilatador', dosis: '2 - 4 puffs c/20 min en crisis', concentracion: 'Inhalador 100 mcg/puff', alerta: 'Vigilar frecuencia cardíaca y temblores.' }
+      ],
+      turnosGuardia: [
+        { id: 1, dia: 'Martes', entrada: '6:00 PM', salida: '12:00 AM' },
+        { id: 2, dia: 'Miércoles', entrada: '7:00 AM', salida: '1:00 PM' }
+      ],
+      turnoPendientes: [
+        { id: 1, texto: 'Verificar signos vitales y escala PELD en cubículo 3', completado: false },
+        { id: 2, texto: 'Administrar esquema de inmunización PAI a lactante de 2 meses', completado: true },
+        { id: 3, texto: 'Revisar infusión de líquidos basales en paciente con bronquiolitis', completado: false }
+      ]
+    };
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const savedUser = localStorage.getItem("aula_clinica_usuario");
+      if (savedUser) {
+        appState.user = JSON.parse(savedUser);
+        activarAplicacionPrincipal();
+      } else {
+        mostrarVistaAuth();
+      }
+    });
+
+    function switchAuthTab(tab) {
+      const btnLogin = document.getElementById("auth-tab-btn-login");
+      const btnRegister = document.getElementById("auth-tab-btn-register");
+      const formLogin = document.getElementById("form-login");
+      const formRegister = document.getElementById("form-register");
+
+      if (tab === 'login') {
+        btnLogin.className = "flex-1 py-3 text-xs font-bold text-teal-700 border-b-2 border-teal-700 dark:text-teal-400";
+        btnRegister.className = "flex-1 py-3 text-xs font-semibold text-slate-400 border-b-2 border-transparent hover:text-slate-700";
+        formLogin.classList.remove("hidden");
+        formRegister.classList.add("hidden");
+      } else {
+        btnRegister.className = "flex-1 py-3 text-xs font-bold text-teal-700 border-b-2 border-teal-700 dark:text-teal-400";
+        btnLogin.className = "flex-1 py-3 text-xs font-semibold text-slate-400 border-b-2 border-transparent hover:text-slate-700";
+        formRegister.classList.remove("hidden");
+        formLogin.classList.add("hidden");
+      }
+    }
+
+    function handleLoginSubmit(e) {
+      e.preventDefault();
+      const email = document.getElementById("login-email").value;
+      appState.user = { nombre: "Lic. " + email.split('@')[0], rol: "Estudiante de Enfermería", hospital: "Hospital San Gil", email: email };
+      localStorage.setItem("aula_clinica_usuario", JSON.stringify(appState.user));
+      activarAplicacionPrincipal();
+      mostrarToast("¡Bienvenido al Aula Clínica!", "success");
+    }
+
+    function handleRegisterSubmit(e) {
+      e.preventDefault();
+      appState.user = { nombre: document.getElementById("reg-name").value, rol: document.getElementById("reg-role").value, hospital: document.getElementById("reg-hospital").value, email: document.getElementById("reg-email").value };
+      localStorage.setItem("aula_clinica_usuario", JSON.stringify(appState.user));
+      activarAplicacionPrincipal();
+      mostrarToast("Cuenta creada con éxito", "success");
+    }
+
+    function loginAsGuest() {
+      appState.user = { nombre: "Lic. Dannamurillo", rol: "Estudiante de Enfermería", hospital: "Hospital San Gil", email: "dannamurillogarcia9@gmail.com" };
+      localStorage.setItem("aula_clinica_usuario", JSON.stringify(appState.user));
+      activarAplicacionPrincipal();
+      mostrarToast("Sesión iniciada con éxito", "success");
+    }
+
+    function cerrarSesion() {
+      localStorage.removeItem("aula_clinica_usuario");
+      appState.user = null;
+      document.getElementById("view-main").classList.add("hidden");
+      document.getElementById("view-auth").classList.remove("hidden");
+      mostrarToast("Sesión cerrada correctamente", "info");
+    }
+
+    function activarAplicacionPrincipal() {
+      document.getElementById("view-auth").classList.add("hidden");
+      document.getElementById("view-main").classList.remove("hidden");
+      actualizarHeaderUsuario();
+      actualizarSaludoHero();
+      renderizarMedicamentos();
+      renderizarTurnosHorarios();
+      renderizarTurno();
+      navigateTo('home');
+    }
+
+    function mostrarVistaAuth() {
+      document.getElementById("view-main").classList.add("hidden");
+      document.getElementById("view-auth").classList.remove("hidden");
+    }
+
+    function navigateTo(viewId) {
+      appState.currentView = viewId;
+      ['home', 'pediatria', 'neonatos', 'pp', 'medicamentos', 'calculadoras', 'simulacion', 'turno'].forEach(v => {
+        const el = document.getElementById(`content-${v}`);
+        if (el) el.classList.add("hidden");
+      });
+      const targetView = document.getElementById(`content-${viewId}`);
+      if (targetView) targetView.classList.remove("hidden");
+
+      document.querySelectorAll(".nav-btn").forEach(btn => {
+        btn.classList.remove("text-teal-700", "dark:text-teal-300", "bg-teal-50", "dark:bg-teal-950/60", "font-semibold");
+        btn.classList.add("text-slate-600", "dark:text-slate-300", "font-medium");
+      });
+      const activeBtn = document.getElementById(`nav-${viewId}`);
+      if (activeBtn) {
+        activeBtn.classList.remove("text-slate-600", "dark:text-slate-300", "font-medium");
+        activeBtn.classList.add("text-teal-700", "dark:text-teal-300", "bg-teal-50", "dark:bg-teal-950/60", "font-semibold");
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function actualizarHeaderUsuario() {
+      const headerArea = document.getElementById("user-header-area");
+      if (!appState.user) return;
+      headerArea.innerHTML = `
+        <div class="relative group">
+          <button class="flex items-center space-x-2 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+            <div class="w-9 h-9 rounded-xl bg-teal-100 dark:bg-teal-900 flex items-center justify-center font-bold text-teal-800 dark:text-teal-200 text-xs border border-teal-300">${appState.user.nombre.charAt(4) || 'U'}</div>
+            <div class="hidden xl:block text-left">
+              <span class="text-xs font-bold block text-slate-800 dark:text-slate-200 leading-none">${appState.user.nombre}</span>
+              <span class="text-[10px] text-teal-700 dark:text-teal-400 font-medium">${appState.user.rol}</span>
+            </div>
+            <i class="fa-solid fa-chevron-down text-[10px] text-slate-400"></i>
+          </button>
+          <div class="hidden group-hover:block absolute right-0 top-full mt-1 w-56 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 p-2 z-50">
+            <div class="px-3 py-2 border-b border-slate-100 dark:border-slate-800">
+              <p class="text-xs font-bold text-slate-800 dark:text-white">${appState.user.nombre}</p>
+              <p class="text-[10px] text-slate-500 truncate">${appState.user.email}</p>
+            </div>
+            <button onclick="cerrarSesion()" class="w-full text-left px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-950/50 rounded-xl mt-1 flex items-center"><i class="fa-solid fa-right-from-bracket mr-2"></i> Cerrar Sesión</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function actualizarSaludoHero() {
+      const heroTitle = document.getElementById("hero-title");
+      const heroSubtitle = document.getElementById("hero-subtitle");
+      if (appState.user && heroTitle) {
+        let nombreLimpio = appState.user.nombre;
+        if (nombreLimpio.includes("@")) nombreLimpio = "Lic. " + nombreLimpio.split("@")[0].replace("Lic. ", "");
+        heroTitle.innerHTML = `¡Hola, ${nombreLimpio}!`;
+        heroSubtitle.innerHTML = `Bienvenido(a) a tu aula clínica en ${appState.user.hospital}. Tienes acceso completo a todas las guías, vademécum, calculadoras PALS y censo hospitalario.`;
+      }
+    }
+
+    function renderizarMedicamentos() {
+      const container = document.getElementById("medicamentos-list");
+      if (!container) return;
+      container.innerHTML = appState.medicamentos.map(m => `
+        <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+          <div class="flex justify-between items-start mb-2">
+            <h4 class="font-bold text-sm text-teal-800 dark:text-teal-300">${m.nombre}</h4>
+            <span class="text-[10px] bg-teal-100 dark:bg-teal-950 text-teal-700 dark:text-teal-300 font-bold px-2 py-0.5 rounded-full">${m.categoria}</span>
+          </div>
+          <p class="text-xs text-slate-600 dark:text-slate-300 mb-1"><strong>Dosis:</strong> ${m.dosis}</p>
+          <p class="text-xs text-slate-500 mb-2"><strong>Concentración:</strong> ${m.concentracion}</p>
+          <p class="text-[11px] text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 p-2 rounded-lg">⚠️ ${m.alerta}</p>
+        </div>
+      `).join('');
+    }
+
+    function actualizarDosisSugerida() {
+      const sel = document.getElementById("calc-select-med").value;
+      document.getElementById("calc-dosis").value = sel === '80' ? 80 : 10;
+    }
+
+    function calcularDosisAvanzada() {
+      const peso = parseFloat(document.getElementById("calc-peso").value);
+      const dosis = parseFloat(document.getElementById("calc-dosis").value);
+      const res = document.getElementById("calc-resultado");
+      if (isNaN(peso) || isNaN(dosis) || peso <= 0 || dosis <= 0) {
+        mostrarToast("Por favor ingrese valores numéricos válidos", "warning");
+        return;
+      }
+      const mgTotal = peso * dosis;
+      const mlJarabe = mgTotal / 30; // Asumiendo concentración estándar 150mg/5ml (30mg/ml)
+      res.classList.remove("hidden");
+      res.innerHTML = `
+        <p>💊 Dosis en Peso: <strong>${mgTotal.toFixed(2)} mg</strong> por toma.</p>
+        <p>💉 Volumen aproximado (Jarabe 150mg/5mL): <strong>${mlJarabe.toFixed(2)} mL</strong>.</p>
+      `;
+    }
+
+    function renderizarTurnosHorarios() {
+      const container = document.getElementById("lista-turnos-horarios");
+      if (!container) return;
+      container.innerHTML = appState.turnosGuardia.map(t => `
+        <div class="p-3 rounded-xl bg-white dark:bg-slate-900 border border-teal-200 dark:border-slate-700 shadow-sm flex justify-between items-center">
+          <div>
+            <span class="text-xs font-bold text-teal-800 dark:text-teal-300 block"><i class="fa-solid fa-calendar-day mr-1"></i> ${t.dia}</span>
+            <span class="text-[11px] text-slate-500">Entrada: ${t.entrada} - Salida: ${t.salida}</span>
+          </div>
+          <button onclick="eliminarTurnoHorario(${t.id})" class="text-red-500 hover:text-red-700 text-xs p-1"><i class="fa-solid fa-trash"></i></button>
+        </div>
+      `).join('');
+    }
+
+    function agregarTurnoHorario() {
+      const dia = document.getElementById("turno-dia").value;
+      const entrada = document.getElementById("turno-entrada").value.trim();
+      const salida = document.getElementById("turno-salida").value.trim();
+      if (!entrada || !salida) {
+        mostrarToast("Por favor ingresa la hora de entrada y salida", "warning");
+        return;
+      }
+      appState.turnosGuardia.push({ id: Date.now(), dia, entrada, salida });
+      document.getElementById("turno-entrada").value = "";
+      document.getElementById("turno-salida").value = "";
+      renderizarTurnosHorarios();
+      mostrarToast("Turno programado correctamente", "success");
+    }
+
+    function eliminarTurnoHorario(id) {
+      appState.turnosGuardia = appState.turnosGuardia.filter(t => t.id !== id);
+      renderizarTurnosHorarios();
+      mostrarToast("Turno eliminado", "info");
+    }
+
+    function renderizarTurno() {
+      const container = document.getElementById("turno-checklist");
+      if (!container) return;
+      container.innerHTML = appState.turnoPendientes.map(t => `
+        <label class="flex items-center space-x-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl cursor-pointer border border-slate-200 dark:border-slate-700">
+          <input type="checkbox" ${t.completado ? 'checked' : ''} onchange="toggleTurnoItem(${t.id})" class="w-4 h-4 text-teal-600 rounded">
+          <span class="text-xs ${t.completado ? 'line-through text-slate-400' : 'text-slate-700 dark:text-slate-200 font-medium'}">${t.texto}</span>
+        </label>
+      `).join('');
+    }
+
+    function toggleTurnoItem(id) {
+      const item = appState.turnoPendientes.find(t => t.id === id);
+      if (item) { item.completado = !item.completado; renderizarTurno(); }
+    }
+
+    function mostrarToast(mensaje, tipo = 'success') {
+      const toast = document.getElementById("toast");
+      const toastMsg = document.getElementById("toast-msg");
+      const toastIcon = document.getElementById("toast-icon");
+      toastMsg.textContent = mensaje;
+      toastIcon.className = tipo === 'success' ? "fa-solid fa-circle-check text-emerald-400 text-lg" : "fa-solid fa-circle-info text-cyan-400 text-lg";
+      toast.classList.remove("translate-y-20", "opacity-0", "pointer-events-none");
+      setTimeout(() => { toast.classList.add("translate-y-20", "opacity-0", "pointer-events-none"); }, 3500);
+    }
+
+    function toggleDarkMode() {
+      appState.darkMode = !appState.darkMode;
+      document.documentElement.classList.toggle('dark', appState.darkMode);
+      document.getElementById("dark-mode-icon").className = appState.darkMode ? "fa-solid fa-sun text-sm" : "fa-solid fa-moon text-sm";
+    }
+
+    function toggleMobileMenu() { document.getElementById("mobile-menu").classList.toggle("hidden"); }
+    function openEmergencyModal() { document.getElementById("emergency-modal").classList.remove("hidden"); }
+    function closeEmergencyModal() { document.getElementById("emergency-modal").classList.add("hidden"); }
+  </script>
+</body>
+
+</html>
